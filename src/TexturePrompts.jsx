@@ -62,6 +62,15 @@ a.marca:focus-visible{outline:2px solid ${C.cyan};outline-offset:4px}
 .tema svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.7}
 
 /* ---- painel ---- */
+/* Cabeçalho: o nome encolhe antes de encostar no botão de tema, e a barra de
+   rolagem do painel é fina para não roubar largura do nome. */
+.marca{flex:0 1 auto;min-width:0}
+.brand h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel{scrollbar-width:thin;scrollbar-color:${C.line} transparent}
+.panel::-webkit-scrollbar{width:8px}
+.panel::-webkit-scrollbar-thumb{background:${C.line};border-radius:2px}
+.panel::-webkit-scrollbar-track{background:transparent}
+
 .panel{width:312px;flex:0 0 312px;background:${C.ink2};border-right:1px solid ${C.line};
   overflow-y:auto;padding:0}
 .sec{border-bottom:1px solid ${C.line};padding:16px 18px}
@@ -579,6 +588,7 @@ export default function TexturePrompts() {
                   : <>Nada escrito ainda: saindo em <b>inglês</b>.</>
                 : <>Fixado em <b>{pt ? "português" : "inglês"}</b>.</>}
               {pt && (modelo === "midjourney" || modelo === "flux") && " Midjourney e Flux entendem português, mas acertam mais em inglês."}
+              {pt && modelo === "gemini" && " Gemini e Flow leem português bem."}
             </p>
           </div>
           <label className="check" data-off={aceitaNeg ? 0 : 1}>
@@ -590,6 +600,7 @@ export default function TexturePrompts() {
             {modelo === "grok" && "Grok: caixa alta entre chaves, como no exemplo. Não aceita negativo."}
             {modelo === "midjourney" && <>Midjourney: parâmetros no fim — <b>--ar</b>, <b>--style raw</b>{tile && <>, <b>--tile</b></>} e <b>--no</b>.</>}
             {modelo === "gpt" && "GPT Image: frases completas, que é como ele lê melhor."}
+            {modelo === "gemini" && "Gemini e Flow: frases completas, com a proporção escrita. Nenhum dos dois aceita negativo — no Flow, a proporção vale a da interface."}
             {modelo === "flux" && "Flux / SD: lista de termos, com o negativo em campo separado."}
             {modelo === "firefly" && "Firefly: frases completas. A proporção se escolhe na interface dele."}
           </p>
