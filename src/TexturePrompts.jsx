@@ -9,9 +9,6 @@ import {
   fraseAtributo, montarPartes, formatar, MODELO_ACEITA_NEGATIVO, detectarIdioma, presetDe,
 } from "./prompt.js";
 
-/* Menu do hub de ferramentas (repo graphic-design-hub). Em dev aponta pro servidor local. */
-const HUB_URL = import.meta.env.DEV ? "http://localhost:5180/" : "https://design-tools-gugaxd.vercel.app/";
-
 /* ============================================================
    texture prompts — gerador de prompts de textura e material
    Família: gri.d.maker · bento maker · gradient maker · 3d maker
@@ -458,7 +455,7 @@ export default function TexturePrompts() {
 
       {/* ============================ PAINEL ============================ */}
       <aside className="panel">
-        <Header tool="texture prompts" homeHref={HUB_URL} tema={tema}
+        <Header tool="texture prompts" tema={tema}
           onToggleTema={() => setTema(tema === "escuro" ? "claro" : "escuro")} />
 
         <section className="sec">
