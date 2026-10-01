@@ -5,8 +5,8 @@ import { MONO, SANS } from "./theme.js";
 import { CATEGORIAS, MATERIAIS, attrsDe, sementeDe } from "./biblioteca.js";
 import { amostra } from "./amostras.js";
 import {
-  MODELOS, PROPORCOES, ASSUNTOS, LUZES, FUNDOS, ESTILOS, COMPOSICOES, ATRIBUTOS,
-  fraseAtributo, montarPartes, formatar, MODELO_ACEITA_NEGATIVO,
+  MODELOS, PROPORCOES, IDIOMAS, ASSUNTOS, LUZES, FUNDOS, ESTILOS, COMPOSICOES, ATRIBUTOS,
+  fraseAtributo, montarPartes, formatar, MODELO_ACEITA_NEGATIVO, detectarIdioma, presetDe,
 } from "./prompt.js";
 
 /* Menu do hub de ferramentas (repo graphic-design-hub). Em dev aponta pro servidor local. */
@@ -334,6 +334,7 @@ export default function TexturePrompts() {
   const [modelo, setModelo] = useState("grok");
   const [proporcao, setProporcao] = useState("1:1");
   const [negativo, setNegativo] = useState(true);
+  const [idiomaModo, setIdiomaModo] = useState("auto");
   const [filtro, setFiltro] = useState("todas");
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("");
@@ -353,13 +354,25 @@ export default function TexturePrompts() {
     setAttrs(attrsDe(m, vv));
   };
 
+  /* Idioma: no automático, segue o que o usuário escreveu. O texto de um
+     preset não é pontuado — ele é nosso e troca de língua junto com o
+     resto —, mas se o preset foi escolhido em português, isso vale como
+     sinal: clicar em "Esfera" não pode devolver o prompt para o inglês.
+     Sem sinal nenhum, fica em inglês. */
+  const preset = presetDe(assunto);
+  const detectado = detectarIdioma([preset ? "" : assunto, cor, extra].join(" "))
+    || (preset && assunto.trim() === preset.pt ? "pt" : null);
+  const idioma = idiomaModo === "auto" ? detectado || "en" : idiomaModo;
+  const pt = idioma === "pt";
+
   const partes = useMemo(
-    () => montarPartes({ modo, assunto, attrs, cor, extra, luz, fundo, estilo, composicao, proporcao }, mat, va),
-    [modo, assunto, attrs, cor, extra, luz, fundo, estilo, composicao, proporcao, mat, va],
+    () => montarPartes({ modo, assunto, attrs, cor, extra, luz, fundo, estilo, composicao, proporcao, idioma }, mat, va),
+    [modo, assunto, attrs, cor, extra, luz, fundo, estilo, composicao, proporcao, idioma, mat, va],
   );
   const aceitaNeg = MODELO_ACEITA_NEGATIVO[modelo];
   const saida = useMemo(() => formatar(partes, modelo, negativo && aceitaNeg), [partes, modelo, negativo, aceitaNeg]);
-  const textoCompleto = saida.negativo ? `${saida.texto}\n\nNegative prompt: ${saida.negativo}` : saida.texto;
+  const rotuloNeg = pt ? "Prompt negativo" : "Negative prompt";
+  const textoCompleto = saida.negativo ? `${saida.texto}\n\n${rotuloNeg}: ${saida.negativo}` : saida.texto;
   const nomeModelo = MODELOS.find((m) => m.id === modelo).nome;
 
   const visiveis = useMemo(() => {
@@ -367,12 +380,11 @@ export default function TexturePrompts() {
     return MATERIAIS.filter((m) => {
       if (filtro !== "todas" && m.cat !== filtro) return false;
       if (!q) return true;
-      return [m.nome, ...m.variantes.map((v) => v.nome + " " + v.material)].join(" ").toLowerCase().includes(q);
+      return [m.nome, ...m.variantes.map((v) => `${v.nome} ${v.material} ${v.pt.material}`)].join(" ").toLowerCase().includes(q);
     });
   }, [filtro, busca]);
 
   const tile = modo === "superficie";
-  const presetAtivo = ASSUNTOS.find((a) => a.texto === assunto.trim());
   const nomeArquivo = `texture-prompt-${mat.id}-${va.id}-${modelo}`;
 
   const copiar = async () => avisar((await copiarTexto(textoCompleto)) ? "Prompt copiado." : "Não deu para copiar — selecione o texto.");
@@ -465,12 +477,13 @@ export default function TexturePrompts() {
               <div className="ctl-label" style={{ marginBottom: 6 }}>Assunto</div>
               <div className="grid2" style={{ marginBottom: 8 }}>
                 {ASSUNTOS.map((a) => (
-                  <button key={a.id} className="btn" data-on={presetAtivo?.id === a.id ? 1 : 0}
-                    onClick={() => setAssunto(a.texto)}>{a.nome}</button>
+                  <button key={a.id} className="btn" data-on={preset?.id === a.id ? 1 : 0}
+                    onClick={() => setAssunto(pt ? a.pt : a.texto)}>{a.nome}</button>
                 ))}
               </div>
-              <textarea rows={2} value={assunto} aria-label="Descrição do assunto"
-                placeholder="a coffee cup, a sneaker, the word HELLO…"
+              <textarea rows={2} value={preset ? (pt ? preset.pt : preset.texto) : assunto}
+                aria-label="Descrição do assunto"
+                placeholder="uma xícara de café, um tênis, a palavra OLÁ…"
                 onChange={(e) => setAssunto(e.target.value)} />
             </div>
           )}
@@ -493,21 +506,21 @@ export default function TexturePrompts() {
           </div>
           <div className="ctl" style={{ marginTop: 14 }}>
             <div className="ctl-label" style={{ marginBottom: 6 }}>Cor dominante</div>
-            <input type="text" value={cor} placeholder="cobalt blue, sage green…" aria-label="Cor dominante"
+            <input type="text" value={cor} placeholder="azul cobalto, verde-sálvia…" aria-label="Cor dominante"
               onChange={(e) => setCor(e.target.value)} />
           </div>
           <Field label="Detalhe extra">
-            <input type="text" value={extra} placeholder="water droplets on the surface…" aria-label="Detalhe extra"
+            <input type="text" value={extra} placeholder="gotas d'água na superfície…" aria-label="Detalhe extra"
               onChange={(e) => setExtra(e.target.value)} />
           </Field>
-          <p className="hint">Cor e detalhe em inglês: o prompt inteiro sai em inglês, que é onde os modelos acertam mais.</p>
+          <p className="hint">Escreva em português ou em inglês: o prompt inteiro acompanha o idioma do que você escreveu.</p>
         </section>
 
         <section className="sec">
           <h2 className="sec-title">Atributos</h2>
           {ATRIBUTOS.map((a) => (
             <Slider key={a.id} label={a.nome} value={attrs[a.id]} accent={C.mag}
-              ends={[a.min, a.max]} frase={fraseAtributo(a, attrs[a.id])}
+              ends={[a.min, a.max]} frase={fraseAtributo(a, attrs[a.id], idioma)}
               onChange={(v) => setAttrs((s) => ({ ...s, [a.id]: v }))} />
           ))}
           <button className="btn" style={{ marginTop: 4 }} onClick={() => setAttrs(attrsDe(mat, va))}>
@@ -555,6 +568,22 @@ export default function TexturePrompts() {
               ))}
             </div>
           </div>
+          <div className="ctl">
+            <div className="ctl-label" style={{ marginBottom: 6 }}>Idioma do prompt</div>
+            <div className="grid3">
+              {IDIOMAS.map((i) => (
+                <button key={i.id} className="btn" data-on={i.id === idiomaModo ? 1 : 0} onClick={() => setIdiomaModo(i.id)}>{i.nome}</button>
+              ))}
+            </div>
+            <p className="hint" style={{ marginTop: 6 }}>
+              {idiomaModo === "auto"
+                ? detectado
+                  ? <>Detectado: <b>{pt ? "português" : "inglês"}</b>, pelo que você escreveu.</>
+                  : <>Nada escrito ainda: saindo em <b>inglês</b>.</>
+                : <>Fixado em <b>{pt ? "português" : "inglês"}</b>.</>}
+              {pt && (modelo === "midjourney" || modelo === "flux") && " Midjourney e Flux entendem português, mas acertam mais em inglês."}
+            </p>
+          </div>
           <label className="check" data-off={aceitaNeg ? 0 : 1}>
             <input type="checkbox" checked={negativo && aceitaNeg} disabled={!aceitaNeg}
               onChange={(e) => setNegativo(e.target.checked)} />
@@ -591,7 +620,7 @@ export default function TexturePrompts() {
       <main className="stage">
         <div className="bar">
           <span><b>{mat.nome}</b> · {va.nome}</span>
-          <span><b>{nomeModelo}</b> · {proporcao}</span>
+          <span><b>{nomeModelo}</b> · {proporcao} · {pt ? "PT" : "EN"}</span>
           <span><b>{contaPalavras(textoCompleto)}</b> palavras · <b>{textoCompleto.length}</b> caracteres</span>
           <span className="sp" />
           <span className="dica">clique numa amostra para trocar o material</span>

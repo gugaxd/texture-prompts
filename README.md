@@ -38,7 +38,14 @@ quando o slider muda. `prompt.js` monta as partes e formata por modelo:
 | Flux / SD | lista de termos, prompt negativo em campo separado |
 | Firefly | frases completas, sem proporção no texto |
 
-Os prompts saem em inglês, que é onde os modelos de imagem acertam mais. A interface é em português.
+## Idioma
+
+Todo fragmento existe em inglês e em português. No modo automático, o idioma do prompt segue o
+que você escreve no assunto, na cor e no detalhe extra: `detectarIdioma`, em `prompt.js`, pontua
+palavras típicas de cada língua e conta acento a favor do português. O texto dos presets de
+assunto não é pontuado, porque troca de língua junto com o resto, mas um preset escolhido em
+português conta como sinal. Sem nada escrito, o prompt sai em inglês, que é onde os modelos de
+imagem acertam mais. O idioma também pode ser fixado à mão.
 
 ## Amostras
 
@@ -58,7 +65,9 @@ As amostras são ilustrativas — mostram o caráter do material, não o resulta
 
 ## Material novo
 
-Entra em `MATERIAIS`, em `src/biblioteca.js`. A amostra reaproveita um gerador existente
+Entra em `MATERIAIS`, em `src/biblioteca.js`, com os negativos em `neg` e `negPt` e, em cada
+variação, `material` e `detalhes` em inglês e o mesmo em `pt`. O material em português começa
+pelo substantivo, sem artigo, porque entra depois de "feita de". A amostra reaproveita um gerador existente
 (`papel`, `madeira`, `marmore`, `pedra`, `concreto`, `terrazzo`, `gesso`, `tecido`, `couro`,
 `escovado`, `oxidado`, `agua`, `holo`) ou um shader de esfera (`vidro`, `gel`, `metal`,
 `plastico`, `ceramica`, `veludo`, `perola`). Gerador novo entra em `GERADORES`, em
