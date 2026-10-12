@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import Header from "./components/Header.jsx";
 import { MONO, SANS } from "./theme.js";
+
+/* Esta é a versão independente; o botão do cabeçalho leva ao hub publicado.
+   A cópia que vai ao ar vive em graphic-design-hub, servida em /texture-prompts/. */
+const HUB_URL = "https://gh-the-hub.vercel.app/";
 import { CATEGORIAS, MATERIAIS, attrsDe, sementeDe } from "./biblioteca.js";
 import { amostra } from "./amostras.js";
 import {
@@ -61,8 +65,11 @@ a.marca:focus-visible{outline:2px solid ${C.cyan};outline-offset:4px}
 .tema svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.7}
 
 /* ---- painel ---- */
-/* Cabeçalho: o nome encolhe antes de encostar no botão de tema, e a barra de
-   rolagem do painel é fina para não roubar largura do nome. */
+/* Cabeçalho: o nome encolhe antes de encostar nos botões, e a barra de rolagem
+   do painel é fina para não roubar largura do nome. */
+.brand .marca{gap:9px}
+div.brand{gap:8px}
+.brand .acoes{gap:4px}
 .marca{flex:0 1 auto;min-width:0}
 .brand h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .panel{scrollbar-width:thin;scrollbar-color:${C.line} transparent}
@@ -220,9 +227,18 @@ input[type=text]:focus-visible,textarea:focus-visible{outline:2px solid ${C.cyan
   .destaque{grid-template-columns:1fr}
   .quadro{max-width:420px}
 }
+  /* Celular e tablet em pé: o painel deixa de ser uma caixa (display:contents),
+     então o cabeçalho e o palco sobem para o topo e grudam lá, enquanto os
+     controles rolam por baixo. O overflow:hidden da raiz anularia o sticky. */
 @media (max-width:860px){
-  .app{flex-direction:column;height:auto;min-height:0}
-  .panel{width:100%;flex:none;max-height:none;border-right:none;border-bottom:1px solid ${C.line}}
+  /* tablet em pé: a coluna de controles para de esticar e fica centrada */
+  .panel>*:not(.brand){padding-inline:max(18px,calc((100% - 600px) / 2))}
+  .app{flex-direction:column;height:auto;min-height:0;overflow:visible}
+  .panel{display:contents}
+  .panel>*{order:1;background:${C.ink2};width:100%}
+  .brand{order:-2;position:sticky;top:0;z-index:7}
+  .stage{order:-1;position:sticky;top:63px;z-index:6;height:46vh;flex:none;
+    background:${C.ink};border-bottom:1px solid ${C.line}}
   .corpo{padding:20px 16px}
   .bar .dica{display:none}
   .busca{width:100% !important}
@@ -482,7 +498,7 @@ export default function TexturePrompts() {
 
       {/* ============================ PAINEL ============================ */}
       <aside className="panel">
-        <Header tool="texture prompts" tema={tema}
+        <Header tool="texture prompts" homeHref={HUB_URL} tema={tema}
           onToggleTema={() => setTema(tema === "escuro" ? "claro" : "escuro")} />
 
         <section className="sec">
